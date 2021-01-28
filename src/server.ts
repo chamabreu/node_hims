@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv'
 import express from 'express';
 import mongoose from 'mongoose';
 import StoreRouter from './StoreRouter'
+import SearchRouter from './SearchRouter'
 import cors from 'cors'
 dotenv.config()
 
@@ -28,7 +29,7 @@ mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology
 
 /* Routes */
 app.use('/store', StoreRouter)
-
+app.use('/search', SearchRouter)
 
 
 app.get('/', (req, res) => {
