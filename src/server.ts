@@ -2,11 +2,14 @@
 import * as dotenv from 'dotenv'
 import express from 'express';
 import mongoose from 'mongoose';
+import StoreRouter from './StoreRouter'
+import cors from 'cors'
 dotenv.config()
 
 /* App Config */
 const app = express()
-
+app.use(cors())
+app.use(express.json())
 
 
 /* MONGOOSE */
@@ -21,34 +24,21 @@ mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology
 
 
 
+
+
 /* Routes */
+app.use('/store', StoreRouter)
+
+
+
 app.get('/', (req, res) => {
-  res.send("ANOTHER TEST")
+  res.send("GET Home Route")
 })
 
-app.get('/get', (req, res) => {
 
-  res.send("USER LISTED")
+app.post('/', (req, res) => {
+  res.send("Hi from Post")
 })
-
-app.get('/post', (req, res) => {
-  // let [first, last] = ["Jemand", "Anders"]
-
-  // const newUser = new User({
-  //   firstName: first,
-  //   lastName: last
-  // })
-
-  // newUser.save()
-  // .then(rUser => {
-  //   res.send(rUser.firstName)
-  // })
-  // .catch(error => {
-  //   res.send("Error")
-  // })
-
-})
-
 
 
 /* Port Listen */
