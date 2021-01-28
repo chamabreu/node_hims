@@ -4,8 +4,15 @@
   "description": "API for HIMS",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon server.js",
+    "getall": "npm i && git clone https://github.com/chamabreu/react_hims && cd react_hims && npm i"
   },
   "author": "JMB",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
 }
