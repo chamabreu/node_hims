@@ -1,12 +1,12 @@
 # HowTo
 
-Clone the [frontend repo](https://github.com/chamabreu/react_hims) folder (react_hims)
-into this folder (node_hims) itself.
+### Enter in rootfolder "npm run getall"
 
+This installs all dependencys and gets the frontend app into the folder.
 
-in both folders:
-npm i
-npm start
+To run the app
+- "npm run dev" in node_hims runs on localhost:5000
+- "npm start" in react_hims runs on localhost:3000
 
 
 ## API and Database
