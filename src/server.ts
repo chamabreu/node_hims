@@ -5,7 +5,11 @@ import mongoose from 'mongoose';
 import StoreRouter from './StoreRouter'
 import SearchRouter from './SearchRouter'
 import cors from 'cors'
+
+/* Config dotenv to get the process.env stuff */
 dotenv.config()
+
+
 
 /* App Config */
 const app = express()
@@ -13,8 +17,8 @@ app.use(cors())
 app.use(express.json())
 
 
-/* MONGOOSE */
-mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology: true})
+/* MONGOOSE CONNECTION - outsource in own module */
+mongoose.connect(process.env.MONGODB, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(result => {
     console.log("Connected")
   })
@@ -28,18 +32,18 @@ mongoose.connect(process.env.MONGODB, {useNewUrlParser: true, useUnifiedTopology
 
 
 /* Routes */
+/* Store route to handle store requests */
 app.use('/store', StoreRouter)
+/* Searchroute to handle search, view etc.. */
 app.use('/search', SearchRouter)
 
-
+/* Home page of API - no Content */
 app.get('/', (req, res) => {
   res.send("GET Home Route")
 })
 
 
-app.post('/', (req, res) => {
-  res.send("Hi from Post")
-})
+
 
 
 /* Port Listen */
