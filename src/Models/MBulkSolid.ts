@@ -6,71 +6,23 @@ const BulkSolidSchema: Schema = new Schema({
     type: Number,
     required: true
   },
-  description: {
-    type: String,
-    required: true
-  },
-  client: {
-    type: String,
-    required: true
-  },
   aID: {
     type: String,
-    required: true
-  },
-  clientContact: {
-    type: String,
-    required: true
-  },
-  msds: {
-    type: Boolean,
-    required: true
-  },
-  exprotection: {
-    type: Boolean,
-    required: true
-  },
-  weight: {
-    type: Number,
-    required: true
-  },
-  size: {
-    type: Number,
-    required: true
-  },
-  palletCount: {
-    type: Number,
-    required: true
-  },
-  archive: {
-    type: Boolean,
-    required: true
-  },
-  note: {
-    type: String,
-    required: true
-  },
-  storageLocation: {
-    type: String,
-    required: true
-  },
-  bundle: {
-    type: String,
-    required: true
-  },
-  customBundle: {
-    type: String,
-    required: true
-  },
-  wastedBy: {
-    type: String,
-    required: true
-  },
-  wasteDate: {
-    type: String,
-    required: true
   },
   arrivalDate: {
+    type: String,
+    required: true
+  },
+  bulkSolidShape: {
+    type: String,
+  },
+  casNumber: {
+    type: String,
+  },
+  density: {
+    type: String,
+  },
+  description: {
     type: String,
     required: true
   },
@@ -78,6 +30,30 @@ const BulkSolidSchema: Schema = new Schema({
     type: String,
     required: true
   },
+  exprotection: {
+    type: Boolean,
+    required: true
+  },
+  msds: {
+    type: Boolean,
+    required: true
+  },
+  msdsFile: {
+    type: String,
+  },
+  note: {
+    type: String,
+    required: true
+  },
+  pictureFile: {
+    type: String,
+  },
+  onHold: {
+    type: Boolean,
+  },
+  storedAt: {
+    type: [String],
+  }
 },
   {
     timestamps: true

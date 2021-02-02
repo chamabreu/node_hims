@@ -3,6 +3,9 @@ import MPallet from './Models/MPallet';
 import IPallet from './Interfaces/IPallet'
 import IBulkSolid from './Interfaces/IBulkSolid'
 import MBulkSolid from './Models/MBulkSolid'
+import MBulkSolidCounter from './Models/MBulkSolidCounter'
+import MRack from './Models/MRack'
+import mongoose from 'mongoose';
 
 
 const router = express.Router()
@@ -39,61 +42,199 @@ router.post('/pallet', (req: Request, res: Response) => {
 })
 
 
-router.post('/bulksolid', (req: Request, res: Response) => {
+router.post('/bulksolid', async (req: Request, res: Response) => {
   const {
     bulkSolidID,
-    description,
-    client,
     aID,
-    clientContact,
-    msds,
-    exprotection,
-    weight,
-    size,
-    palletCount,
-    archive,
-    note,
-    storageLocation,
-    bundle,
-    customBundle,
-    wastedBy,
-    wasteDate,
     arrivalDate,
+    bulkSolidShape,
+    casNumber,
+    density,
+    description,
     enteredBy,
+    exprotection,
+    msds,
+    msdsFile,
+    note,
+    pictureFile
   }: IBulkSolid = req.body
 
+  const onHold = true
 
-  const newBulkSolid = new MBulkSolid({
-    bulkSolidID,
-    description,
-    client,
-    aID,
-    clientContact,
-    msds,
-    exprotection,
-    weight,
-    size,
-    palletCount,
-    archive,
-    note,
-    storageLocation,
-    bundle,
-    customBundle,
-    wastedBy,
-    wasteDate,
-    arrivalDate,
-    enteredBy,
+
+  const getNewBulkSolidID =
+    await MBulkSolidCounter.findOneAndUpdate(
+      { _id: 'bulksolidcounter' },
+      { $inc: { counterValue: 1 } },
+      { returnOriginal: false }
+    )
+      .then(doc => {
+        return doc.counterValue
+      })
+      .catch(error => {
+        return null
+      })
+
+
+  if (getNewBulkSolidID === bulkSolidID) {
+    const newBulkSolid = new MBulkSolid({
+      bulkSolidID: getNewBulkSolidID,
+      aID,
+      arrivalDate,
+      bulkSolidShape,
+      casNumber,
+      density,
+      description,
+      enteredBy,
+      exprotection,
+      msds,
+      msdsFile,
+      note,
+      pictureFile,
+      onHold
+    })
+
+
+
+    newBulkSolid.save()
+      .then(rBulkSolid => {
+        console.log(rBulkSolid)
+        res.send(rBulkSolid)
+      })
+      .catch(error => {
+        console.log(error)
+        res.send(error)
+      })
+
+  } else {
+    res.send("ERRRRRORRRR")
+
+  }
+
+})
+
+
+router.post('/movebulksolid', async (req, res) => {
+  /* Get the itemID, fieldID and the rackName to handle the item transition */
+  const {
+    sourceItemID,
+    targetFieldID,
+    currentRackName
+  }:
+    {
+      sourceItemID: number,
+      targetFieldID: string,
+      currentRackName: string
+    } = req.body
+
+
+
+  /* The Session to start a transaction. This helps on reverting single changes if one action fails */
+  const session = await mongoose.startSession()
+  session.startTransaction()
+
+
+  /* try catch block for the transaction. because we use await, we can catch all errors at once */
+  try {
+    /* update first the array in the MBulkSolid object. */
+    const updatedBulkSolid = await MBulkSolid.findOneAndUpdate(
+      /* Query to find the right item and check that it does not already exist in the target location */
+      {
+        bulkSolidID: sourceItemID,
+        storedAt: { $ne: targetFieldID }
+      },
+      /* change its onHold state to false to make it disappear in the onhold area */
+      /* change the storedAt array to contain the target fieldID */
+      {
+        onHold: true,
+        $push: { storedAt: targetFieldID }
+      },
+      /* Options */
+      {
+        returnOriginal: false,
+        session: session
+      })
+
+
+
+    /* If the new bulkSolid is null, throw an error.
+    this could be caused because the user tried to set a bulk into a field which already contains stuff.
+    this should be implemented to be disabled in the frontend
+    */
+    if (!updatedBulkSolid) {
+      throw new Error("Already stored");
+    };
+
+
+    /* Update the rack to say it contains now the bulksolid */
+    const updatedRack = await MRack.findOneAndUpdate(
+      /* get the name of the rack */
+      { rackName: currentRackName },
+      /* set the rackField to the sourceitem. a rackfield can only contain a single bulk solid item */
+      { $set: { [`rackFields.${targetFieldID}`]: sourceItemID } },
+      /* options */
+      {
+        /* return the updated item */
+        returnOriginal: false,
+        /* upsert true for creating a rackfield if it does not exist yet */
+        upsert: true,
+        /* include it in the session */
+        session: session
+      })
+
+    /* if the updatedRack is null, throw error */
+    if (!updatedRack) {
+      throw new Error("Rack Error")
+    };
+
+    /* commit the tranaction */
+    await session.commitTransaction()
+    /* and response to the request with the updated bulksolid */
+    return res.send({ updatedRack })
+
+
+    /* the errorhandler */
+  } catch (error) {
+    /* abort session */
+    await session.abortTransaction()
+    session.endSession()
+    /* send the error back */
+    console.log(error)
+    return res.send(error)
+  }
+
+
+})
+
+
+router.get("/newbulksolidid", (req, res) => {
+  MBulkSolidCounter.findById("bulksolidcounter", {}, {}, (err, data) => {
+    if (err) return console.log(err)
+    res.send({ lastCounterValue: data.counterValue })
   })
+})
 
-  newBulkSolid.save()
-    .then(rBulkSolid => {
-      console.log(rBulkSolid)
-      res.send(rBulkSolid)
-    })
-    .catch(error => {
-      console.log(error)
-      res.send(error)
-    })
+
+
+router.get('/rackdetails', async (req, res) => {
+  const occupiedRackFields = await MRack.findOne(req.query, {}, {})
+
+  if (!occupiedRackFields) {
+    return res.send(null)
+  };
+
+  /* get all single bulkSolidIDs in an array */
+  const bulkSolidIDs: number[] = []
+  for (const rackField of Object.keys(occupiedRackFields.rackFields)) {
+    const singleBulkSolidID = occupiedRackFields.rackFields[rackField]
+    !bulkSolidIDs.includes(singleBulkSolidID) && bulkSolidIDs.push(singleBulkSolidID)
+  }
+
+
+  /* find all MBulkSolid objects by the IDs */
+  const bulkSolidObjects = await MBulkSolid.find({ bulkSolidID: {$in: bulkSolidIDs} }, {}, {})
+
+  res.send({allBulkSolids: bulkSolidObjects, rackFields: occupiedRackFields.rackFields})
 
 })
 
