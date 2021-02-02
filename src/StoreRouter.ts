@@ -6,9 +6,22 @@ import MBulkSolid from './Models/MBulkSolid'
 import MBulkSolidCounter from './Models/MBulkSolidCounter'
 import MRack from './Models/MRack'
 import mongoose from 'mongoose';
-
-
+import multer from 'multer';
 const router = express.Router()
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './media/bulksolid/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
+  }
+})
+
+
+const bulkSolidPicture = multer({ storage: storage })
+
+
 
 
 router.post('/pallet', (req: Request, res: Response) => {
@@ -42,7 +55,7 @@ router.post('/pallet', (req: Request, res: Response) => {
 })
 
 
-router.post('/bulksolid', async (req: Request, res: Response) => {
+router.post('/bulksolid', bulkSolidPicture.fields([{ name: 'bulkSolidPicture' }, { name: 'msdsFile' }]), async (req: Request, res: Response) => {
   const {
     bulkSolidID,
     aID,
@@ -54,12 +67,14 @@ router.post('/bulksolid', async (req: Request, res: Response) => {
     enteredBy,
     exprotection,
     msds,
-    msdsFile,
     note,
-    pictureFile
-  }: IBulkSolid = req.body
+  }: IBulkSolid = JSON.parse(req.body.bulkSolidData)
 
-  const onHold = true
+
+
+  const pictureFile = req.files['bulkSolidPicture'] ? req.files['bulkSolidPicture'][0] : { path: "NA" }
+  const msdsFile = req.files['msdsFile'] ? req.files['msdsFile'][0] : { path: "NA" }
+
 
 
   const getNewBulkSolidID =
@@ -77,7 +92,8 @@ router.post('/bulksolid', async (req: Request, res: Response) => {
 
 
   if (getNewBulkSolidID === bulkSolidID) {
-    const newBulkSolid = new MBulkSolid({
+
+    const newBulkSolid: IBulkSolid = new MBulkSolid({
       bulkSolidID: getNewBulkSolidID,
       aID,
       arrivalDate,
@@ -88,26 +104,24 @@ router.post('/bulksolid', async (req: Request, res: Response) => {
       enteredBy,
       exprotection,
       msds,
-      msdsFile,
+      msdsFile: msdsFile.path,
       note,
-      pictureFile,
-      onHold
+      pictureFile: pictureFile.path,
+      onHold: true
     })
 
 
 
     newBulkSolid.save()
       .then(rBulkSolid => {
-        console.log(rBulkSolid)
         res.send(rBulkSolid)
       })
       .catch(error => {
-        console.log(error)
         res.send(error)
       })
 
   } else {
-    res.send("ERRRRRORRRR")
+    res.send("NOT THE RIGHT ID!!!")
 
   }
 
@@ -190,7 +204,7 @@ router.post('/movebulksolid', async (req, res) => {
     /* commit the tranaction */
     await session.commitTransaction()
     /* and response to the request with the updated bulksolid */
-    return res.send({ updatedRack })
+    return res.send({ updatedRack: updatedRack, updatedBulkSolid: updatedBulkSolid })
 
 
     /* the errorhandler */
@@ -232,11 +246,18 @@ router.get('/rackdetails', async (req, res) => {
 
 
   /* find all MBulkSolid objects by the IDs */
-  const bulkSolidObjects = await MBulkSolid.find({ bulkSolidID: {$in: bulkSolidIDs} }, {}, {})
+  const bulkSolidObjects = await MBulkSolid.find({ bulkSolidID: { $in: bulkSolidIDs } }, {}, {})
 
-  res.send({allBulkSolids: bulkSolidObjects, rackFields: occupiedRackFields.rackFields})
+  res.send({ allBulkSolids: bulkSolidObjects, rackFields: occupiedRackFields.rackFields })
 
 })
+
+router.post('/uploadimage', bulkSolidPicture.single('bulkSolidPicture'), (req, res) => {
+  console.log(req.file)
+  console.log(req.body)
+  res.send(req.body)
+})
+
 
 
 export default router
