@@ -2,8 +2,8 @@
 import * as dotenv from 'dotenv'
 import express from 'express';
 import mongoose from 'mongoose';
-import StoreRouter from './StoreRouter'
-import OnHoldRouter from './OnHoldRouter'
+import ReactRouter from './React/ReactRoutes'
+import ApiRouter from './API/ApiRoutes'
 import cors from 'cors'
 
 /* Config dotenv to get the process.env stuff */
@@ -32,12 +32,13 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
 
 
 /* Routes */
-/* Store route to handle store requests */
-app.use('/store', StoreRouter)
-/* onhold requests */
-app.use('/onhold', OnHoldRouter)
-/* public access to /media. a rework to specific routes to pictures needs more work */
-app.use('/media', express.static('media'))
+
+/* API Routes */
+app.use('/api', ApiRouter)
+
+
+/* React Routes */
+app.use('/', ReactRouter)
 
 
 

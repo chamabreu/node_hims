@@ -1,9 +1,9 @@
 /* Imports */
 import express, { Request, Response } from 'express';
-import MBulkSolid from './Models/MBulkSolid'
+import MBulkSolid from '../Models/MBulkSolid'
 const router = express.Router()
 
-/* ROUTES OF .../onhold */
+/* ROUTES OF .../api/onhold */
 
 
 /* get the bulk solids which are onHold */

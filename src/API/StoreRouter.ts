@@ -1,11 +1,11 @@
 /* Imports */
 import express, { Request, Response } from 'express';
-import MPallet from './Models/MPallet';
-import IPallet from './Interfaces/IPallet'
-import IBulkSolid from './Interfaces/IBulkSolid'
-import MBulkSolid from './Models/MBulkSolid'
-import MBulkSolidCounter from './Models/MBulkSolidCounter'
-import MRack from './Models/MRack'
+import MPallet from '../Models/MPallet';
+import IPallet from '../Interfaces/IPallet'
+import IBulkSolid from '../Interfaces/IBulkSolid'
+import MBulkSolid from '../Models/MBulkSolid'
+import MBulkSolidCounter from '../Models/MBulkSolidCounter'
+import MRack from '../Models/MRack'
 import mongoose from 'mongoose';
 import multer from 'multer';
 const router = express.Router()
@@ -31,7 +31,7 @@ const bulkSolidPicture = multer({ storage: storage })
 
 
 
-/* ROUTES of .../store*/
+/* ROUTES of .../api/store*/
 
 /* pallet storage - out of function */
 router.post('/pallet', (req: Request, res: Response) => {
