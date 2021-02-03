@@ -34,7 +34,9 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
 /* Routes */
 /* Store route to handle store requests */
 app.use('/store', StoreRouter)
+/* onhold requests */
 app.use('/onhold', OnHoldRouter)
+/* public access to /media. a rework to specific routes to pictures needs more work */
 app.use('/media', express.static('media'))
 
 

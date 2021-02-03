@@ -1,25 +1,30 @@
+/* Imports */
 import express, { Request, Response } from 'express';
-import MPallet from './Models/MPallet';
-import IPallet from './Interfaces/IPallet'
-import IBulkSolid from './Interfaces/IBulkSolid'
 import MBulkSolid from './Models/MBulkSolid'
-import IBulkSolidCounter from './Interfaces/IBulkSolidCounter'
-import MBulkSolidCounter from './Models/MBulkSolidCounter'
-
-
 const router = express.Router()
 
+/* ROUTES OF .../onhold */
 
+
+/* get the bulk solids which are onHold */
 router.get('/', (req: Request, res: Response) => {
-  MBulkSolid.find({onHold: true}, (error, data) => {
-    if (error) {
-      res.send(error)
-      return
-    } else {
-      res.send(data)
-      return
-    }
-  })
+  /* find MBulksolids */
+  MBulkSolid.find(
+    /* which are onHold */
+    { onHold: true },
+
+    /* response handler */
+    (error, data) => {
+
+      if (error) {
+        return res.send(error)
+      
+      
+      }else {
+        /* send the bulk solid fields */
+        return res.send(data)
+      }
+    })
 
 })
 
