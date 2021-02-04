@@ -18,12 +18,30 @@ router.get('/', (req: Request, res: Response) => {
 
       if (error) {
         return res.send(error)
-      
-      
-      }else {
+
+
+      } else {
         /* send the bulk solid fields */
         return res.send(data)
       }
+    })
+
+})
+
+
+router.post('/removeonhold', (req, res) => {
+  const bulkSolidIDToChange = req.body.bulkSolidID
+
+  MBulkSolid.findOneAndUpdate(
+    { bulkSolidID: bulkSolidIDToChange },
+    { onHold: false },
+    { returnOriginal: false }
+  )
+    .then(data => {
+      res.send(data)
+    })
+    .catch(error => {
+      res.send(error)
     })
 
 })

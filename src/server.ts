@@ -43,15 +43,6 @@ app.use('/', ReactRouter)
 
 
 
-/* Home page of API - no Content */
-app.get('/', (req, res) => {
-  res.send("GET Home Route")
-})
-
-
-
-
-
 /* Port Listen */
 app.listen(5000, () => {
   console.log("Server is running")

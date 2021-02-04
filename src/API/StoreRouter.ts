@@ -336,5 +336,4 @@ router.get('/rackdetails', async (req, res) => {
 
 
 
-
 export default router
