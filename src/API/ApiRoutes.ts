@@ -14,5 +14,10 @@ apiRouter.use('/onhold', OnHoldRouter)
 /* public access to /media. a rework to specific routes to pictures needs more work */
 apiRouter.use('/media', express.static('media'))
 
+apiRouter.use('*', (req, res) => {
+  console.log('hier gibts nichts zu sehen')
+  res.status(404).send('not found')
+})
+
 
 export default apiRouter

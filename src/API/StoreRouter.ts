@@ -330,7 +330,7 @@ router.get('/rackdetails', async (req, res) => {
   const bulkSolidObjects = await MBulkSolid.find({ bulkSolidID: { $in: bulkSolidIDs } }, {}, {})
 
   /* send the bulksolid objects and the rackfields as object */
-  res.send({ allBulkSolids: bulkSolidObjects, rackFields: occupiedRackFields.rackFields })
+  res.send({ bulkSolids: bulkSolidObjects, rackFields: occupiedRackFields.rackFields })
 
 })
 
