@@ -66,6 +66,8 @@ router.post('/pallet', (req: Request, res: Response) => {
 })
 
 
+
+
 /* bulksolid storage */
 router.post(
   /* route */
@@ -91,45 +93,54 @@ router.post(
       note,
     }: IBulkSolid = JSON.parse(req.body.bulkSolidData)
 
+
     /* get the pictureFile and the msdsFile if available, or set it to "NA" */
     const pictureFile = req.files['bulkSolidPicture'] ? req.files['bulkSolidPicture'][0] : { path: "NA" }
     const msdsFile = req.files['msdsFile'] ? req.files['msdsFile'][0] : { path: "NA" }
 
 
-    /* get a new bulk solid id from bulksolidcounter from DB. increases it on the way by 1 */
-    const newBulkSolidID =
+    /* The Session to start a transaction. This helps on reverting single changes if one action fails */
+    const bulkSolidStoreSession = await mongoose.startSession()
+    bulkSolidStoreSession.startTransaction()
 
-      await MBulkSolidCounter.findOneAndUpdate(
+
+    try {
+
+      /* get a new bulk solid id from bulksolidcounter from DB. increases it on the way by 1 */
+      const { counterValue: newBulkSolidID } = await MBulkSolidCounter.findOneAndUpdate(
         /* find the document of bulksolidcounter */
         { _id: 'bulksolidcounter' },
 
         /* increase the counterValue by 1 */
         { $inc: { counterValue: 1 } },
 
-        /* return new counterValue - this is the new bulk solid ID */
-        { returnOriginal: false }
+        {
+          /* return new counterValue - this is the new bulk solid ID */
+          returnOriginal: false,
+
+          /* Attach it to the session */
+          session: bulkSolidStoreSession
+        }
       )
 
-        /* response handler */
-        .then(doc => {
-          /* store the new id in newBulkSolidID */
-          return doc.counterValue
-        })
 
-        /* error handler */
-        .catch(error => {
-          /* store null in newBulkSolidID */
-          return null
-        })
+      if (newBulkSolidID !== bulkSolidID) {
+        /*
+        throw error if IDs dont match. this could be if 2 clients try to save at the same time.
+        needs rework to handle this error
+        */
+
+        throw new Error('ID ERROR')
+
+      };
 
 
-    /*
+
+      /*
       if the received (from frontend) bulkSolidID
       and the above created newBulkSolidID (from DB) match,
-      save a new bulk solid to DB
-    */
-    if (newBulkSolidID === bulkSolidID) {
-
+      go on
+      */
       /* create a new bulk solid from Model */
       const newBulkSolid: IBulkSolid = new MBulkSolid({
         bulkSolidID: newBulkSolidID,
@@ -150,27 +161,31 @@ router.post(
 
 
       /* save it */
-      newBulkSolid.save()
+      const savedBulkSolid = await newBulkSolid.save({ session: bulkSolidStoreSession })
 
-        /* response hadler */
-        .then(returnedBulkSolid => {
-          /* send the returnedBulkdSolid back to frontend */
-          res.send(returnedBulkSolid)
-        })
-
-        /* error handler */
-        .catch(error => {
-          /* send the error */
-          res.send(error)
-        })
+      if (!savedBulkSolid) {
+        throw new Error('savedBulkSolid ERROR')
+      }
 
 
-      /* send if the IDs dont match. this should never be a case */
-    } else {
-      res.send("NOT THE RIGHT ID!!!")
+      /* commit session and transaction */
+      await bulkSolidStoreSession.commitTransaction()
+
+      /* and return new bulkSolid */
+      return res.send(savedBulkSolid)
+
+
+
+      /* catch any errors */
+    } catch (error) {
+      await bulkSolidStoreSession.abortTransaction()
+      bulkSolidStoreSession.endSession()
+      console.log(error)
+      return res.send(error)
     }
 
-  })
+  }
+)
 
 
 /* drag drop handler to update rackFields and bulksolid.storedAt[] */
@@ -191,8 +206,8 @@ router.post('/movebulksolid', async (req, res) => {
 
 
   /* The Session to start a transaction. This helps on reverting single changes if one action fails */
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const moveBulkSolidSession = await mongoose.startSession()
+  moveBulkSolidSession.startTransaction()
 
 
   /* try catch block for the transaction. because we use await, we can catch all errors at once */
@@ -227,7 +242,7 @@ router.post('/movebulksolid', async (req, res) => {
         returnOriginal: false,
 
         /* attach it to session */
-        session: session
+        session: moveBulkSolidSession
       })
 
 
@@ -259,7 +274,7 @@ router.post('/movebulksolid', async (req, res) => {
         upsert: true,
 
         /* attach it to session */
-        session: session
+        session: moveBulkSolidSession
       })
 
 
@@ -270,7 +285,7 @@ router.post('/movebulksolid', async (req, res) => {
 
 
     /* commit the tranaction */
-    await session.commitTransaction()
+    await moveBulkSolidSession.commitTransaction()
     /* and response to the request with the updated rack. */
     return res.send({ updatedRack })
 
@@ -278,8 +293,8 @@ router.post('/movebulksolid', async (req, res) => {
     /* the errorhandler */
   } catch (error) {
     /* abort session */
-    await session.abortTransaction()
-    session.endSession()
+    await moveBulkSolidSession.abortTransaction()
+    moveBulkSolidSession.endSession()
     /* send the error back */
     console.log(error)
     return res.send(error)
