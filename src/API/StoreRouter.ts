@@ -2,9 +2,9 @@
 import express, { Request, Response } from 'express';
 import MPallet from '../Models/MPallet';
 import IPallet from '../Interfaces/IPallet'
-import IBulkSolid from '../Interfaces/IBulkSolid'
 import MBulkSolid from '../Models/MBulkSolid'
 import MBulkSolidCounter from '../Models/MBulkSolidCounter'
+import { BulkSolidStoreMW } from './BulkSolidStoreMW'
 import MRack from '../Models/MRack'
 import mongoose from 'mongoose';
 import multer from 'multer';
@@ -16,12 +16,7 @@ const router = express.Router()
 const storage = multer.diskStorage({
   /* set the destination of the files uploaded */
   destination: function (req, file, cb) {
-    cb(null, './media/bulksolid/')
-  },
-
-  /* set the filename to original filenames */
-  filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, './media/')
   }
 })
 
@@ -32,6 +27,29 @@ const bulkSolidPicture = multer({ storage: storage })
 
 
 /* ROUTES of .../api/store*/
+
+
+
+/* bulksolid storage */
+router.post(
+  /* route */
+  '/bulksolid',
+
+  /* Middleware for multer */
+  bulkSolidPicture.fields(
+    [
+      { name: 'bulkSolidPicture' },
+      { name: 'msdsFile' }
+    ]
+  ),
+
+  /* Middleware to store the data */
+  BulkSolidStoreMW,
+)
+
+
+
+
 
 /* pallet storage - out of function */
 router.post('/pallet', (req: Request, res: Response) => {
@@ -66,126 +84,6 @@ router.post('/pallet', (req: Request, res: Response) => {
 })
 
 
-
-
-/* bulksolid storage */
-router.post(
-  /* route */
-  '/bulksolid',
-
-  /* Middleware for multer */
-  bulkSolidPicture.fields([{ name: 'bulkSolidPicture' }, { name: 'msdsFile' }]),
-
-  /* final request - async to enable await */
-  async (req: Request, res: Response) => {
-    /* Deconstruct the bulk solid data. need to be parsed. receives formData because of multer. sender needs to stringify content. */
-    const {
-      bulkSolidID,
-      aID,
-      arrivalDate,
-      bulkSolidShape,
-      casNumber,
-      density,
-      description,
-      enteredBy,
-      exprotection,
-      msds,
-      note,
-    }: IBulkSolid = JSON.parse(req.body.bulkSolidData)
-
-
-    /* get the pictureFile and the msdsFile if available, or set it to "NA" */
-    const pictureFile = req.files['bulkSolidPicture'] ? req.files['bulkSolidPicture'][0] : { path: "NA" }
-    const msdsFile = req.files['msdsFile'] ? req.files['msdsFile'][0] : { path: "NA" }
-
-
-    /* The Session to start a transaction. This helps on reverting single changes if one action fails */
-    const bulkSolidStoreSession = await mongoose.startSession()
-    bulkSolidStoreSession.startTransaction()
-
-
-    try {
-
-      /* get a new bulk solid id from bulksolidcounter from DB. increases it on the way by 1 */
-      const { counterValue: newBulkSolidID } = await MBulkSolidCounter.findOneAndUpdate(
-        /* find the document of bulksolidcounter */
-        { _id: 'bulksolidcounter' },
-
-        /* increase the counterValue by 1 */
-        { $inc: { counterValue: 1 } },
-
-        {
-          /* return new counterValue - this is the new bulk solid ID */
-          returnOriginal: false,
-
-          /* Attach it to the session */
-          session: bulkSolidStoreSession
-        }
-      )
-
-
-      if (newBulkSolidID !== bulkSolidID) {
-        /*
-        throw error if IDs dont match. this could be if 2 clients try to save at the same time.
-        needs rework to handle this error
-        */
-
-        throw new Error('ID ERROR')
-
-      };
-
-
-
-      /*
-      if the received (from frontend) bulkSolidID
-      and the above created newBulkSolidID (from DB) match,
-      go on
-      */
-      /* create a new bulk solid from Model */
-      const newBulkSolid: IBulkSolid = new MBulkSolid({
-        bulkSolidID: newBulkSolidID,
-        aID,
-        arrivalDate,
-        bulkSolidShape,
-        casNumber,
-        density,
-        description,
-        enteredBy,
-        exprotection,
-        msds,
-        msdsFile: msdsFile.path,
-        note,
-        pictureFile: pictureFile.path,
-        onHold: true
-      })
-
-
-      /* save it */
-      const savedBulkSolid = await newBulkSolid.save({ session: bulkSolidStoreSession })
-
-      if (!savedBulkSolid) {
-        throw new Error('savedBulkSolid ERROR')
-      }
-
-
-      /* commit session and transaction */
-      await bulkSolidStoreSession.commitTransaction()
-
-      /* and return new bulkSolid */
-      return res.send(savedBulkSolid)
-
-
-
-      /* catch any errors */
-    } catch (error) {
-      await bulkSolidStoreSession.abortTransaction()
-      bulkSolidStoreSession.endSession()
-      console.log(error)
-      return res.send(error)
-    }
-
-  }
-)
 
 
 /* drag drop handler to update rackFields and bulksolid.storedAt[] */
