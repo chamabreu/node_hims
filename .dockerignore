@@ -2,3 +2,4 @@ node_modules
 Dockerfile
 .dockerignore
 package-lock.json
+react_hims
