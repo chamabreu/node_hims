@@ -1,18 +1,27 @@
 /* Imports */
-import express, { Request, Response } from 'express';
-import StoreRouter from './StoreRouter'
-import OnHoldRouter from './OnHoldRouter'
+import express from 'express';
+import RackRouter from './Rack/RackRoutes'
+import BulkSolidRouter from './Bulksolid/BulkSolidRoutes'
+import OnHoldRouter from './OnHold/OnHoldRoutes'
 const apiRouter = express.Router()
 
 /* ROUTES OF .../api */
 
+/* bulksolid request */
+apiRouter.use('/bulksolid', BulkSolidRouter)
 
-/* Store route to handle store requests */
-apiRouter.use('/store', StoreRouter)
+
+/* rack requests */
+apiRouter.use('/rack', RackRouter)
+
+
 /* onhold requests */
 apiRouter.use('/onhold', OnHoldRouter)
+
+
 /* public access to /media. a rework to specific routes to pictures needs more work */
 apiRouter.use('/media', express.static('media'))
+
 
 apiRouter.use('*', (req, res) => {
   console.log('hier gibts nichts zu sehen')

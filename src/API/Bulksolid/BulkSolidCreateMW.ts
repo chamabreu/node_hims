@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
-import IBulkSolid from '../Interfaces/IBulkSolid'
-import MBulkSolidCounter from '../Models/MBulkSolidCounter'
-import MBulkSolid from '../Models/MBulkSolid'
+import IBulkSolid from '../../Interfaces/IBulkSolid'
+import MBulkSolidCounter from '../../Models/MBulkSolidCounter'
+import MBulkSolid from '../../Models/MBulkSolid'
 import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
 
 
-export async function BulkSolidStoreMW(req: Request, res: Response) {
+export async function BulkSolidCreateMW(req: Request, res: Response) {
 
 
   /* final request - async to enable await */
@@ -140,6 +140,12 @@ export async function BulkSolidStoreMW(req: Request, res: Response) {
     /* commit session and transaction */
     await bulkSolidStoreSession.commitTransaction()
 
+
+    console.log("")
+    console.log("POST - BULKSOLIDSTORE -- BulkSolid")
+    console.log(savedBulkSolid)
+    console.log("--------------------")
+    console.log("")
     /* and return new bulkSolid */
     return res.send(savedBulkSolid)
 
@@ -155,7 +161,12 @@ export async function BulkSolidStoreMW(req: Request, res: Response) {
     fs.rmSync(bulkSolidIDFolderName, { recursive: true })
 
     /* Log and return */
+
+    console.log("")
+    console.log("POST - BULKSOLIDSTORE -- error")
     console.log(error)
+    console.log("--------------------")
+    console.log("")
     return res.send(error)
   }
 

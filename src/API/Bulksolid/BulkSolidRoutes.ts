@@ -1,14 +1,13 @@
-/* Imports */
-import express, { Request, Response } from 'express';
-import MPallet from '../Models/MPallet';
-import IPallet from '../Interfaces/IPallet'
-import MBulkSolid from '../Models/MBulkSolid'
-import MBulkSolidCounter from '../Models/MBulkSolidCounter'
-import { BulkSolidStoreMW } from './BulkSolidStoreMW'
-import MRack from '../Models/MRack'
+import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
-const router = express.Router()
+import MBulkSolid from '../../Models/MBulkSolid';
+import MBulkSolidCounter from '../../Models/MBulkSolidCounter';
+import MRack from '../../Models/MRack';
+import { BulkSolidCreateMW } from './BulkSolidCreateMW';
+
+const bulkSolidRouter = express()
+
 
 
 /* MULTER CONFIG */
@@ -26,14 +25,45 @@ const bulkSolidPicture = multer({ storage: storage })
 
 
 
-/* ROUTES of .../api/store*/
 
+/* GET */
+
+
+
+/* get the countervalue for a new bulk solid ID */
+bulkSolidRouter.get("/getnewid", (req, res) => {
+  /* find bulksolidcounter */
+  MBulkSolidCounter.findById("bulksolidcounter", {}, {}, (error, data) => {
+    /* if error  */
+    if (error) {
+      console.log("")
+      console.log("GET - NEWBULKSOLIDID -- ERROR")
+      console.log(error)
+      console.log("--------------------")
+      console.log("")
+      return res.send(error)
+    }
+
+    /* else send latest counter value */
+    console.log("")
+    console.log("GET - NEWBULKSOLIDID -- countervalue")
+    console.log(data.counterValue)
+    console.log("--------------------")
+    console.log("")
+    res.send({ counterValue: data.counterValue })
+  })
+})
+
+
+
+
+/* POST */
 
 
 /* bulksolid storage */
-router.post(
+bulkSolidRouter.post(
   /* route */
-  '/bulksolid',
+  '/create',
 
   /* Middleware for multer */
   bulkSolidPicture.fields(
@@ -44,50 +74,19 @@ router.post(
   ),
 
   /* Middleware to store the data */
-  BulkSolidStoreMW,
+  BulkSolidCreateMW
 )
 
 
 
 
-
-/* pallet storage - out of function */
-router.post('/pallet', (req: Request, res: Response) => {
-  res.send('Out of Function')
-  // const {
-  //   palletID,
-  //   releasedFromStock,
-  //   note,
-  //   storageLocation,
-  //   enteredBy
-  // }: IPallet = req.body
-
-
-  // const newPallet = new MPallet({
-  //   palletID,
-  //   releasedFromStock,
-  //   note,
-  //   storageLocation,
-  //   enteredBy,
-  // })
-
-  // newPallet.save()
-  //   .then(rPallet => {
-  //     console.log(rPallet)
-  //     res.send(rPallet)
-  //   })
-  //   .catch(error => {
-  //     console.log(error)
-  //     res.send(error)
-  //   })
-
-})
+/* PUT */
 
 
 
 
 /* drag drop handler to update rackFields and bulksolid.storedAt[] */
-router.post('/movebulksolid', async (req, res) => {
+bulkSolidRouter.put('/storedat', async (req, res) => {
 
   /* Get the itemID, fieldID and the rackName to handle the item transition */
   const {
@@ -185,7 +184,12 @@ router.post('/movebulksolid', async (req, res) => {
     /* commit the tranaction */
     await moveBulkSolidSession.commitTransaction()
     /* and response to the request with the updated rack. */
-    return res.send({ updatedRack })
+    console.log("")
+    console.log("POST - MOVEBULKSOLID -- updatedRack")
+    console.log(updatedRack)
+    console.log("--------------------")
+    console.log("")
+    return res.send(updatedRack)
 
 
     /* the errorhandler */
@@ -194,7 +198,11 @@ router.post('/movebulksolid', async (req, res) => {
     await moveBulkSolidSession.abortTransaction()
     moveBulkSolidSession.endSession()
     /* send the error back */
+    console.log("")
+    console.log("POST - MOVEBULKSOLID -- ERROR")
     console.log(error)
+    console.log("--------------------")
+    console.log("")
     return res.send(error)
   }
 
@@ -202,51 +210,35 @@ router.post('/movebulksolid', async (req, res) => {
 })
 
 
-/* get the countervalue for a new bulk solid ID */
-router.get("/newbulksolidid", (req, res) => {
-  /* find bulksolidcounter */
-  MBulkSolidCounter.findById("bulksolidcounter", {}, {}, (err, data) => {
-    /* if error  */
-    if (err) return res.send(err)
 
-    /* else send latest counter value */
-    res.send({ lastCounterValue: data.counterValue })
-  })
-})
+bulkSolidRouter.put('/onhold', (req, res) => {
+  const bulkSolidIDToChange = req.body.bulkSolidID
 
-
-
-/*
-get the rack details. this gets rackfields with its content ids and
-all bulk solid ids which are needed by the rackfields
-*/
-router.get('/rackdetails', async (req, res) => {
-  /* in req.query is the rackname which is shown to the user */
-  const occupiedRackFields = await MRack.findOne(req.query, {}, {})
-
-  /* if there are no occupiedRackFields due to never stored a item in a rackfield */
-  if (!occupiedRackFields) {
-    /* return null */
-    return res.send(null)
-  };
-
-
-  /* get all single bulkSolidIDs in an array */
-  const bulkSolidIDs: number[] = []
-  for (const rackField of Object.keys(occupiedRackFields.rackFields)) {
-    const singleBulkSolidID = occupiedRackFields.rackFields[rackField]
-    !bulkSolidIDs.includes(singleBulkSolidID) && bulkSolidIDs.push(singleBulkSolidID)
-  }
-
-
-  /* find all MBulkSolid objects by the IDs */
-  const bulkSolidObjects = await MBulkSolid.find({ bulkSolidID: { $in: bulkSolidIDs } }, {}, {})
-
-  /* send the bulksolid objects and the rackfields as object */
-  res.send({ bulkSolids: bulkSolidObjects, rackFields: occupiedRackFields.rackFields })
+  MBulkSolid.findOneAndUpdate(
+    { bulkSolidID: bulkSolidIDToChange },
+    { onHold: false },
+    { returnOriginal: false }
+  )
+    .then(updatedBulkSolid => {
+      console.log("")
+      console.log("POST - removeonhold -- BulkSolid")
+      console.log(updatedBulkSolid)
+      console.log("--------------------")
+      console.log("")
+      res.send(updatedBulkSolid)
+    })
+    .catch(error => {
+      console.log("")
+      console.log("POST - removeonhold -- ERROR")
+      console.log(error)
+      console.log("--------------------")
+      console.log("")
+      res.send(error)
+    })
 
 })
 
 
 
-export default router
+
+export default bulkSolidRouter
