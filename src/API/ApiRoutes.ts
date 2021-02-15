@@ -3,6 +3,8 @@ import express from 'express';
 import RackRouter from './Rack/RackRoutes'
 import BulkSolidRouter from './Bulksolid/BulkSolidRoutes'
 import OnHoldRouter from './OnHold/OnHoldRoutes'
+import { MyError } from '../Errorhandler'
+
 const apiRouter = express.Router()
 
 /* ROUTES OF .../api */
@@ -23,9 +25,11 @@ apiRouter.use('/onhold', OnHoldRouter)
 apiRouter.use('/media', express.static('media'))
 
 
-apiRouter.use('*', (req, res) => {
-  console.log('hier gibts nichts zu sehen')
-  res.status(404).send('not found')
+/* Handle not given routes */
+apiRouter.use('*', (req, res, next) => {
+  const error = new MyError('Something not found')
+  error.status = 404
+  next(error)
 })
 
 
