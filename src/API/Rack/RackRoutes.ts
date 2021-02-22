@@ -1,4 +1,5 @@
 import express from 'express';
+import { MyError } from '../../Errorhandler';
 import MBulkSolid from '../../Models/MBulkSolid';
 import MRack from '../../Models/MRack';
 const rackRouter = express()
@@ -23,7 +24,8 @@ rackRouter.get('/getrack', async (req, res) => {
     console.log("--------------------")
     console.log("")
     /* return null */
-    return res.send(null)
+
+    return res.send({ noData: true })
   };
 
 
@@ -52,6 +54,11 @@ rackRouter.get('/getrack', async (req, res) => {
 
 
 
+
+rackRouter.use('*', (req, res, next) => {
+  const error = new MyError('Wrong Rack URL', 404)
+  next(error)
+})
 
 
 

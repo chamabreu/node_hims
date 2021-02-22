@@ -2,9 +2,10 @@ export class MyError extends Error {
   status: number
   message: string
 
-  constructor(message: string) {
+  constructor(message: string, status: number) {
     super()
     this.message = message
+    this.status = status
   }
 }
 

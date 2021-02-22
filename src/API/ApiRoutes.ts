@@ -27,8 +27,7 @@ apiRouter.use('/media', express.static('media'))
 
 /* Handle not given routes */
 apiRouter.use('*', (req, res, next) => {
-  const error = new MyError('Something not found')
-  error.status = 404
+  const error = new MyError('Wrong API Route', 404)
   next(error)
 })
 

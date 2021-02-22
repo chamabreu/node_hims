@@ -1,11 +1,12 @@
 import express from 'express';
+import { MyError } from '../../Errorhandler';
 import MBulkSolid from '../../Models/MBulkSolid';
 
 const onHoldRouter = express()
 
 
 /* get the bulk solids which are onHold */
-onHoldRouter.get('/data', (req, res) => {
+onHoldRouter.get('/data', (req, res, next) => {
   /* find MBulksolids */
   MBulkSolid.find(
     /* which are onHold */
@@ -15,7 +16,8 @@ onHoldRouter.get('/data', (req, res) => {
     (error, data) => {
 
       if (error) {
-        return res.send(error)
+        const apiError = new MyError(error, 500)
+        next(apiError)
 
 
       } else {
@@ -28,5 +30,9 @@ onHoldRouter.get('/data', (req, res) => {
 
 
 
+onHoldRouter.use('*', (req, res, next) => {
+  const error = new MyError('Wrong OnHold URL', 404)
+  next(error)
+})
 
 export default onHoldRouter

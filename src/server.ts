@@ -38,11 +38,9 @@ app.use((error: MyError, req: express.Request, res: express.Response, next: expr
 
   console.log('AN ERROR: ', error)
 
-  res.send({
-    error: {
-      message: error.message
-    }
-  })
+
+  res.status(error.status)
+  res.send(error)
 
 })
 

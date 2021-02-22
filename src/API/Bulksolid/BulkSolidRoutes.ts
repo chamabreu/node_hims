@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
+import { MyError } from '../../Errorhandler';
 import MBulkSolid from '../../Models/MBulkSolid';
 import MBulkSolidCounter from '../../Models/MBulkSolidCounter';
 import MRack from '../../Models/MRack';
@@ -31,7 +32,7 @@ const bulkSolidPicture = multer({ storage: storage })
 
 
 /* get the countervalue for a new bulk solid ID */
-bulkSolidRouter.get("/getnewid", (req, res) => {
+bulkSolidRouter.get("/getnewid", (req, res, next) => {
   /* find bulksolidcounter */
   MBulkSolidCounter.findById("bulksolidcounter", {}, {}, (error, data) => {
     /* if error  */
@@ -41,7 +42,8 @@ bulkSolidRouter.get("/getnewid", (req, res) => {
       console.log(error)
       console.log("--------------------")
       console.log("")
-      return res.send(error)
+      const apiError = new MyError(error.message, 500)
+      next(apiError)
     }
 
     /* else send latest counter value */
@@ -86,7 +88,7 @@ bulkSolidRouter.post(
 
 
 /* drag drop handler to update rackFields and bulksolid.storedAt[] */
-bulkSolidRouter.put('/storedat', async (req, res) => {
+bulkSolidRouter.put('/storedat', async (req, res, next) => {
 
   /* Get the itemID, fieldID and the rackName to handle the item transition */
   const {
@@ -203,7 +205,8 @@ bulkSolidRouter.put('/storedat', async (req, res) => {
     console.log(error)
     console.log("--------------------")
     console.log("")
-    return res.send(error)
+    const apiError = new MyError(error.message, 500)
+    next(apiError)
   }
 
 
@@ -211,7 +214,7 @@ bulkSolidRouter.put('/storedat', async (req, res) => {
 
 
 
-bulkSolidRouter.put('/onhold', (req, res) => {
+bulkSolidRouter.put('/onhold', (req, res, next) => {
   const bulkSolidIDToChange = req.body.bulkSolidID
 
   MBulkSolid.findOneAndUpdate(
@@ -233,12 +236,16 @@ bulkSolidRouter.put('/onhold', (req, res) => {
       console.log(error)
       console.log("--------------------")
       console.log("")
-      res.send(error)
+      const apiError = new MyError(error.message, 500)
+      next(apiError)
     })
 
 })
 
-
+bulkSolidRouter.use('*', (req, res, next) => {
+  const error = new MyError('Wrong Bulksolid URL', 404)
+  next(error)
+})
 
 
 export default bulkSolidRouter
