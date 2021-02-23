@@ -1,5 +1,5 @@
 import express from 'express';
-import { MyError } from '../../Errorhandler';
+import { API_Error } from '../../Errorhandler';
 import MBulkSolid from '../../Models/MBulkSolid';
 import MRack from '../../Models/MRack';
 const rackRouter = express()
@@ -56,7 +56,7 @@ rackRouter.get('/getrack', async (req, res) => {
 
 
 rackRouter.use('*', (req, res, next) => {
-  const error = new MyError('Wrong Rack URL', 404)
+  const error = new API_Error('Wrong Rack URL', 404)
   next(error)
 })
 

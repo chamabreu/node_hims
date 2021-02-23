@@ -1,7 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import multer from 'multer';
-import { MyError } from '../../Errorhandler';
+import { API_Error } from '../../Errorhandler';
 import MBulkSolid from '../../Models/MBulkSolid';
 import MBulkSolidCounter from '../../Models/MBulkSolidCounter';
 import MRack from '../../Models/MRack';
@@ -42,7 +42,7 @@ bulkSolidRouter.get("/getnewid", (req, res, next) => {
       console.log(error)
       console.log("--------------------")
       console.log("")
-      const apiError = new MyError(error.message, 500)
+      const apiError = new API_Error(error.message, 500)
       next(apiError)
     }
 
@@ -205,7 +205,7 @@ bulkSolidRouter.put('/storedat', async (req, res, next) => {
     console.log(error)
     console.log("--------------------")
     console.log("")
-    const apiError = new MyError(error.message, 500)
+    const apiError = new API_Error(error.message, 500)
     next(apiError)
   }
 
@@ -236,14 +236,14 @@ bulkSolidRouter.put('/onhold', (req, res, next) => {
       console.log(error)
       console.log("--------------------")
       console.log("")
-      const apiError = new MyError(error.message, 500)
+      const apiError = new API_Error(error.message, 500)
       next(apiError)
     })
 
 })
 
 bulkSolidRouter.use('*', (req, res, next) => {
-  const error = new MyError('Wrong Bulksolid URL', 404)
+  const error = new API_Error('Wrong Bulksolid URL', 404)
   next(error)
 })
 

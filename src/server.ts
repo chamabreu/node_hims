@@ -6,7 +6,7 @@ import ReactRouter from './React/ReactRoutes'
 import ApiRouter from './API/ApiRoutes'
 import cors from 'cors'
 import fs from 'fs';
-import { MyError } from './Errorhandler'
+import { API_Error } from './Errorhandler'
 
 /* Config dotenv to get the process.env stuff */
 dotenv.config()
@@ -34,7 +34,7 @@ app.use('/', ReactRouter)
 
 
 /* Errorhandler  */
-app.use((error: MyError, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((error: API_Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
 
   console.log('AN ERROR: ', error)
 

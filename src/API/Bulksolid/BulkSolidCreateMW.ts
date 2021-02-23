@@ -5,7 +5,7 @@ import MBulkSolid from '../../Models/MBulkSolid'
 import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
-import { MyError } from '../../Errorhandler';
+import { API_Error } from '../../Errorhandler';
 
 
 export async function BulkSolidCreateMW(req: Request, res: Response, next: NextFunction) {
@@ -168,7 +168,7 @@ export async function BulkSolidCreateMW(req: Request, res: Response, next: NextF
     console.log(error)
     console.log("--------------------")
     console.log("")
-    const apiError = new MyError(error, 500)
+    const apiError = new API_Error(error, 500)
     next(apiError)
   }
 

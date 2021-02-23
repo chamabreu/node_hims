@@ -3,7 +3,7 @@ import express from 'express';
 import RackRouter from './Rack/RackRoutes'
 import BulkSolidRouter from './Bulksolid/BulkSolidRoutes'
 import OnHoldRouter from './OnHold/OnHoldRoutes'
-import { MyError } from '../Errorhandler'
+import { API_Error } from '../Errorhandler'
 
 const apiRouter = express.Router()
 
@@ -27,7 +27,7 @@ apiRouter.use('/media', express.static('media'))
 
 /* Handle not given routes */
 apiRouter.use('*', (req, res, next) => {
-  const error = new MyError('Wrong API Route', 404)
+  const error = new API_Error('Wrong API Route', 404)
   next(error)
 })
 

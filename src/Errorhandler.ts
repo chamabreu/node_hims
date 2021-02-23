@@ -1,4 +1,4 @@
-export class MyError extends Error {
+export class API_Error extends Error {
   status: number
   message: string
 

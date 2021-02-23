@@ -1,5 +1,5 @@
 import express from 'express';
-import { MyError } from '../../Errorhandler';
+import { API_Error } from '../../Errorhandler';
 import MBulkSolid from '../../Models/MBulkSolid';
 
 const onHoldRouter = express()
@@ -16,13 +16,17 @@ onHoldRouter.get('/data', (req, res, next) => {
     (error, data) => {
 
       if (error) {
-        const apiError = new MyError(error, 500)
+        const apiError = new API_Error(error, 500)
         next(apiError)
 
 
       } else {
         /* send the bulk solid fields */
-        return res.send(data)
+        if (data.length !== 0) {
+          return res.send(data)
+        } else {
+          return res.send({ noData: true })
+        }
       }
     })
 
@@ -31,7 +35,7 @@ onHoldRouter.get('/data', (req, res, next) => {
 
 
 onHoldRouter.use('*', (req, res, next) => {
-  const error = new MyError('Wrong OnHold URL', 404)
+  const error = new API_Error('Wrong OnHold URL', 404)
   next(error)
 })
 
