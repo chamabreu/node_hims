@@ -7,6 +7,9 @@ import ApiRouter from './API/ApiRoutes'
 import cors from 'cors'
 import fs from 'fs';
 import { API_Error } from './Errorhandler'
+import { graphqlHTTP } from 'express-graphql';
+import graphSchema from './GraphQL/GraphQLData';
+
 
 /* Config dotenv to get the process.env stuff */
 dotenv.config()
@@ -21,13 +24,15 @@ app.use(express.json())
 
 
 
-
 /* Routes */
 
 /* API Routes */
 app.use('/api', ApiRouter)
 
-
+app.use('/graphql', graphqlHTTP({
+  schema: graphSchema,
+  graphiql: true
+}))
 
 /* React Routes */
 app.use('/', ReactRouter)

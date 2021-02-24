@@ -6,11 +6,15 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": [
     "src/"
   ],
   "exclude": [
-    "dist", "node_modules", "react_hims"
+    "dist",
+    "node_modules",
+    "react_hims"
   ]
 }
